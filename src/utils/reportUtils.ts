@@ -1,3 +1,4 @@
+
 import html2pdf from 'html2pdf.js';
 import { Subject, Semester } from './calculationUtils';
 
@@ -16,6 +17,7 @@ export const generatePDF = (data: ReportData, type: 'sgpa' | 'cgpa'): void => {
   // Create a report container
   const reportContainer = document.createElement('div');
   reportContainer.innerHTML = generateReportHTML(data, type);
+  document.body.appendChild(reportContainer);
   
   // Get the current date
   const date = new Date().toLocaleDateString('en-US', {
@@ -24,9 +26,9 @@ export const generatePDF = (data: ReportData, type: 'sgpa' | 'cgpa'): void => {
     day: 'numeric'
   });
   
-  // Set options for PDF - adjusted margins to minimize white space
+  // Set options for PDF with more aggressive white space elimination
   const options = {
-    margin: 0, // Simplified margin setting to eliminate white space completely
+    margin: 0,
     filename: `${data.studentName}_${type === 'sgpa' ? 'SGPA' : 'CGPA'}_Report.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { 
@@ -34,11 +36,11 @@ export const generatePDF = (data: ReportData, type: 'sgpa' | 'cgpa'): void => {
       useCORS: true, 
       logging: false, 
       letterRendering: true,
-      // Add this to ensure the content is properly sized
       windowWidth: 1000,
-      // Ensure we capture all content
       scrollY: -window.scrollY,
-      scrollX: -window.scrollX
+      scrollX: -window.scrollX,
+      height: reportContainer.offsetHeight,
+      removeContainer: true
     },
     jsPDF: { 
       unit: 'mm', 
@@ -46,23 +48,24 @@ export const generatePDF = (data: ReportData, type: 'sgpa' | 'cgpa'): void => {
       orientation: 'portrait',
       compress: true, 
       precision: 2,
-      // Setting pagesplit to avoid extra page creation
       pagesplit: false
     }
   };
   
-  // Generate PDF
-  html2pdf().from(reportContainer).set(options).save();
+  // Generate PDF and remove the temporary container afterward
+  html2pdf().from(reportContainer).set(options).save().then(() => {
+    document.body.removeChild(reportContainer);
+  });
 };
 
 const generateReportHTML = (data: ReportData, type: 'sgpa' | 'cgpa'): string => {
-  // Common header with adjusted padding for full bleed
+  // Common header with adjusted styling to eliminate white space
   let html = `
     <div style="
       font-family: 'Poppins', sans-serif;
       max-width: 100%;
       margin: 0;
-      padding: 30px;
+      padding: 30px 30px 0 30px;
       background: linear-gradient(135deg, #111, #1a1a1a);
       color: #fff;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -340,14 +343,16 @@ const generateReportHTML = (data: ReportData, type: 'sgpa' | 'cgpa'): string => 
     `;
   }
   
-  // Common footer - modified to ensure no extra space
+  // Common footer - modified to eliminate white space by reducing bottom padding
   html += `
       <div style="
         padding-top: 20px;
+        padding-bottom: 10px;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         text-align: center;
         font-size: 12px;
         color: #999;
+        margin-top: auto;
       ">
         <p style="margin: 0;">This is an automatically generated report by KIIT-CONNECT.</p>
         <p style="margin: 5px 0 0;">For official grades and transcripts, please contact the university examination department.</p>

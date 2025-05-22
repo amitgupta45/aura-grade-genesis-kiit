@@ -1,4 +1,3 @@
-
 import html2pdf from 'html2pdf.js';
 import { Subject, Semester } from './calculationUtils';
 
@@ -27,11 +26,29 @@ export const generatePDF = (data: ReportData, type: 'sgpa' | 'cgpa'): void => {
   
   // Set options for PDF - adjusted margins to minimize white space
   const options = {
-    margin: [0, 0, 0, 0], // [top, right, bottom, left] - all set to 0 to eliminate white space
+    margin: 0, // Simplified margin setting to eliminate white space completely
     filename: `${data.studentName}_${type === 'sgpa' ? 'SGPA' : 'CGPA'}_Report.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true, precision: 2 }
+    html2canvas: { 
+      scale: 2, 
+      useCORS: true, 
+      logging: false, 
+      letterRendering: true,
+      // Add this to ensure the content is properly sized
+      windowWidth: 1000,
+      // Ensure we capture all content
+      scrollY: -window.scrollY,
+      scrollX: -window.scrollX
+    },
+    jsPDF: { 
+      unit: 'mm', 
+      format: 'a4', 
+      orientation: 'portrait',
+      compress: true, 
+      precision: 2,
+      // Setting pagesplit to avoid extra page creation
+      pagesplit: false
+    }
   };
   
   // Generate PDF
@@ -49,7 +66,6 @@ const generateReportHTML = (data: ReportData, type: 'sgpa' | 'cgpa'): string => 
       background: linear-gradient(135deg, #111, #1a1a1a);
       color: #fff;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-      min-height: 100vh;
       display: flex;
       flex-direction: column;
     ">
@@ -324,10 +340,9 @@ const generateReportHTML = (data: ReportData, type: 'sgpa' | 'cgpa'): string => 
     `;
   }
   
-  // Common footer
+  // Common footer - modified to ensure no extra space
   html += `
       <div style="
-        margin-top: auto;
         padding-top: 20px;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         text-align: center;

@@ -1,4 +1,3 @@
-
 import html2pdf from 'html2pdf.js';
 import { Subject, Semester } from './calculationUtils';
 
@@ -16,6 +15,9 @@ export interface ReportData {
 export const generatePDF = (data: ReportData, type: 'sgpa' | 'cgpa'): void => {
   // Create a report container
   const reportContainer = document.createElement('div');
+  reportContainer.style.position = 'absolute';
+  reportContainer.style.left = '-9999px';
+  reportContainer.style.top = '0';
   reportContainer.innerHTML = generateReportHTML(data, type);
   document.body.appendChild(reportContainer);
   
@@ -26,9 +28,12 @@ export const generatePDF = (data: ReportData, type: 'sgpa' | 'cgpa'): void => {
     day: 'numeric'
   });
   
-  // Set options for PDF with more aggressive white space elimination
+  // Force correct dimensions before generating PDF
+  const contentHeight = reportContainer.offsetHeight;
+  
+  // Set options for PDF with aggressive white space elimination
   const options = {
-    margin: 0,
+    margin: [0, 0, 0, 0],
     filename: `${data.studentName}_${type === 'sgpa' ? 'SGPA' : 'CGPA'}_Report.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { 
@@ -37,10 +42,10 @@ export const generatePDF = (data: ReportData, type: 'sgpa' | 'cgpa'): void => {
       logging: false, 
       letterRendering: true,
       windowWidth: 1000,
-      scrollY: -window.scrollY,
-      scrollX: -window.scrollX,
-      height: reportContainer.offsetHeight,
-      removeContainer: true
+      scrollY: 0,
+      scrollX: 0,
+      height: contentHeight,
+      backgroundColor: null
     },
     jsPDF: { 
       unit: 'mm', 
@@ -48,7 +53,8 @@ export const generatePDF = (data: ReportData, type: 'sgpa' | 'cgpa'): void => {
       orientation: 'portrait',
       compress: true, 
       precision: 2,
-      pagesplit: false
+      pagesplit: false,
+      hotfixes: ["px_scaling"]
     }
   };
   
@@ -63,7 +69,7 @@ const generateReportHTML = (data: ReportData, type: 'sgpa' | 'cgpa'): string => 
   let html = `
     <div style="
       font-family: 'Poppins', sans-serif;
-      max-width: 100%;
+      width: 100%;
       margin: 0;
       padding: 30px 30px 0 30px;
       background: linear-gradient(135deg, #111, #1a1a1a);
@@ -71,6 +77,7 @@ const generateReportHTML = (data: ReportData, type: 'sgpa' | 'cgpa'): string => 
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
       display: flex;
       flex-direction: column;
+      box-sizing: border-box;
     ">
       <div style="
         display: flex;
@@ -167,7 +174,6 @@ const generateReportHTML = (data: ReportData, type: 'sgpa' | 'cgpa'): string => 
         padding: 20px;
         border-radius: 8px;
         margin-bottom: 25px;
-        flex-grow: 1;
       ">
         <h2 style="margin-top: 0; margin-bottom: 15px; font-size: 18px; color: #C084FC;">Semester Performance</h2>
         <table style="width: 100%; border-collapse: collapse;">
@@ -246,7 +252,6 @@ const generateReportHTML = (data: ReportData, type: 'sgpa' | 'cgpa'): string => 
         padding: 20px;
         border-radius: 8px;
         margin-bottom: 25px;
-        flex-grow: 1;
       ">
         <h2 style="margin-top: 0; margin-bottom: 15px; font-size: 18px; color: #C084FC;">Academic Performance Summary</h2>
         <table style="width: 100%; border-collapse: collapse;">
@@ -343,11 +348,11 @@ const generateReportHTML = (data: ReportData, type: 'sgpa' | 'cgpa'): string => 
     `;
   }
   
-  // Common footer - modified to eliminate white space by reducing bottom padding
+  // Common footer - modified to ensure no extra space at bottom
   html += `
       <div style="
         padding-top: 20px;
-        padding-bottom: 10px;
+        padding-bottom: 0;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         text-align: center;
         font-size: 12px;
@@ -355,7 +360,7 @@ const generateReportHTML = (data: ReportData, type: 'sgpa' | 'cgpa'): string => 
         margin-top: auto;
       ">
         <p style="margin: 0;">This is an automatically generated report by KIIT-CONNECT.</p>
-        <p style="margin: 5px 0 0;">For official grades and transcripts, please contact the university examination department.</p>
+        <p style="margin: 5px 0 0; padding-bottom: 0;">For official grades and transcripts, please contact the university examination department.</p>
       </div>
     </div>
   `;
